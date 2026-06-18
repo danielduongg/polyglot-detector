@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polyglot — guess my language</title>
+<style>
+  :root{ --red:#da251d; --gold:#ffce00; --cream:#fff8ee; --card:#ffffff;
+         --ink:#2b2118; --muted:#9b8e7e; --bar:#efe6d6; --blue:#2c6e9b; }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+       color:var(--ink);background:
+       radial-gradient(1200px 500px at 50% -10%, #ffe9a8 0%, rgba(255,233,168,0) 60%),
+       var(--cream); min-height:100vh; padding:28px 16px 60px;}
+  .wrap{max-width:680px;margin:0 auto}
+  .top{text-align:center;margin-bottom:18px}
+  .star{color:var(--gold);text-shadow:0 1px 0 #c99a00;font-size:26px}
+  h1{font-size:40px;margin:6px 0 2px;letter-spacing:.5px;
+     background:linear-gradient(180deg,var(--red),#a81813);-webkit-background-clip:text;
+     background-clip:text;color:transparent}
+  .greet{height:30px;font-size:22px;font-weight:700;color:var(--red);transition:opacity .35s}
+  .by{color:var(--muted);font-size:13.5px;margin-top:2px}
+  .tagline{color:#5d5042;font-size:15px;margin:10px auto 0;max-width:520px}
+  .uitog{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:16px 0 8px}
+  .uitog button{border:1.5px solid #e7d9bf;background:#fff;border-radius:999px;
+     padding:6px 12px;font-size:13.5px;cursor:pointer;color:#5d5042;transition:.15s}
+  .uitog button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+  .card{background:var(--card);border:1px solid #f0e4cd;border-radius:18px;
+        box-shadow:0 12px 30px rgba(120,80,20,.10);padding:18px;margin-top:14px}
+  textarea{width:100%;border:1.5px solid #ecdfc6;border-radius:14px;padding:14px;
+     font-size:17px;font-family:inherit;resize:vertical;min-height:70px;outline:none;background:#fffdf8}
+  textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px #ffe9a8}
+  .try{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+  .try .lbl{color:var(--muted);font-size:13px}
+  .chip{border:1px dashed #e0cfa6;background:#fffaf0;border-radius:999px;padding:5px 11px;
+        font-size:13px;cursor:pointer;color:#6b5b45;transition:.15s}
+  .chip:hover{background:#fff3d6;border-color:var(--gold)}
+  .result{margin-top:16px}
+  .hint{color:var(--muted);text-align:center;padding:18px 6px;font-size:14.5px}
+  .det{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .flag{font-size:40px;line-height:1}
+  .det .name{font-size:24px;font-weight:800}
+  .det .pct{margin-left:auto;font-weight:800;font-size:24px;color:var(--red)}
+  .det .flair{font-size:14px;color:#7a6a52}
+  .bar{display:grid;grid-template-columns:120px 1fr 48px;align-items:center;gap:10px;margin:7px 0}
+  .bar .bl{font-size:14px;color:#5d5042;white-space:nowrap}
+  .track{height:14px;background:var(--bar);border-radius:999px;overflow:hidden}
+  .fill{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#cdbfa6,#b7a98e);
+        transition:width .35s ease}
+  .bar.win .fill{background:linear-gradient(90deg,var(--gold),var(--red))}
+  .bar.win .bl{font-weight:700;color:var(--ink)}
+  .bp{font-size:13px;color:var(--muted);text-align:right}
+  .foot{color:#7a6a52;font-size:12.5px;text-align:center;margin-top:18px;line-height:1.5}
+  .foot a{color:var(--red);text-decoration:none;border-bottom:1px solid #f0c9c6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="star">✦</div>
+    <h1>Polyglot</h1>
+    <div class="greet" id="greet">Xin chào</div>
+    <div class="by" id="by">by Daniel · polyglot triathlete 🏊 🎾 🚴</div>
+    <div class="tagline" id="tagline"></div>
+    <div class="uitog" id="uitog"></div>
+  </div>
+
+  <div class="card">
+    <textarea id="inp" rows="2" autofocus></textarea>
+    <div class="try"><span class="lbl" id="tryl"></span><span id="chips"></span></div>
+    <div class="result" id="result"></div>
+  </div>
+
+  <div class="foot">
+    <div id="how"></div>
+    <div style="margin-top:6px">github.com/danielduongg/polyglot-detector</div>
+  </div>
+</div>
+
+<script>
+const MODEL = {"langs":["en","fr","vi","es"],"nmin":1,"nmax":2,"V":517,"log_prior":{"en":-1.3938415667552735,"fr":-1.3938415667552735,"vi":-1.3639886036055924,"es":-1.3938415667552735},"total":{"en":2936,"fr":3028,"vi":2808,"es":3164},"counts":{"en":{" ":314,"p":17,"l":50,"e":156,"a":91,"s":68,"r":82,"m":34,"b":23,"t":101,"o":88,"i":79,"n":80,"g":37,"y":28,"u":37,"d":45,"w":30," p":8,"pl":4,"le":8,"ea":13,"as":10,"se":7,"e ":64," r":14,"re":16,"em":2,"me":8,"mb":1,"be":5,"er":19,"r ":19," t":54,"to":14,"o ":6," b":17,"br":4,"ri":5,"in":28,"ng":16,"g ":15," y":4,"yo":4,"ou":13,"ur":3," g":6,"go":3,"og":2,"gl":2,"es":8,"s ":31," a":27,"an":13,"nd":13,"d ":28,"ow":4,"we":6,"el":6,"l ":8,"f":24,"v":16,"h":59,"k":15," m":15,"my":4,"y ":22," f":14,"fa":2,"av":4,"vo":1,"or":17,"it":5,"te":12," s":23,"sp":3,"po":3,"rt":3,"t ":24," i":20,"is":12,"en":7,"nn":5,"ni":13," o":6,"on":9,"n ":17,"th":37,"he":36," w":17,"ee":6,"ek":2,"ke":6,"c":20," c":9,"co":7,"oa":2,"ac":5,"ch":3,"h ":5,"sa":1,"ai":5,"id":4,"ru":4,"un":7,"pa":1,"ce":3,"im":6,"mp":1,"pr":3,"ro":6,"ov":4,"vi":3,"x":1,"ad":3,"di":4,"a ":9,"oo":8,"od":4,"bo":4,"ok":3,"k ":6,"ef":3,"fo":7,"ed":6," h":9,"ps":1,"la":5,"x ":1,"sw":4,"wi":4,"m ":5,"li":6,"wa":9,"st":8,"ha":7," l":11,"so":4,"i ":7,"fe":5,"mo":8,"rn":5,"at":9,"al":5,"ll":4," d":6,"da":6,"ay":7,"hi":3,"ci":2,"ve":12," e":6,"ev":3,"ta":5,"j":1,"et":4," u":3,"us":3,"gr":2,"ra":7,"ab":3,"of":3,"ut":3,"oj":1,"je":1,"ec":2,"ct":2,"fi":2,"sh":3,"lt":2,"ik":4,"hu":1,"ug":4,"ge":5," v":4,"ic":2,"ry":4,"ti":2,"do":2,"ma":1,"tc":1,"ar":10,"om":4,"rr":2,"w ":6,"mu":2,"eu":1,"um":2,"fr":2,"ir":1,"rs":3,"su":4,"f ":2,"nt":5,"u ":3,"uc":1,"cl":1,"lo":5,"os":2,"rl":2,"ly":4,"pu":1,"ub":1,"bl":3,"c ":1,"ho":2,"ol":4,"ld":5,"bu":3," k":2,"ki":2,"ds":1,"ye":1,"ga":2,"rd":3,"de":2,"af":2,"ft":2,"no":1,"am":1,"ew":5," n":6,"ne":6,"ip":1,"pe":3,"ib":1,"op":1,"il":3,"au":1,"gh":6,"ns":2,"ig":3,"ht":4,"si":2,"wo":3,"ul":3,"up":1,"p ":1,"ag":2,"mm":3,"rf":1,"fu":1,"ua":2,"tr":4,"tu":1,"ud":1,"ui":2,"ss":1,"iv":1,"bi":2,"eg":2,"ia":1,"hl":1,"gu":1,"mi":1,"lu":1,"ue":1,"rm":1},"fr":{" ":319,"j":13,"a":103,"d":42,"o":71,"r":93,"e":180,"n":94,"g":13,"s":70,"l":68,"p":33,"i":74,"c":27,"t":103,"ô":3,"m":39," j":8,"j ":2," a":23,"ad":2,"do":3,"or":7,"re":21,"e ":78," n":13,"na":4,"ag":7,"ge":4,"er":18,"r ":21," d":25,"da":4,"an":12,"ns":10,"s ":44," l":37,"la":11,"a ":13," p":20,"pi":2,"is":10,"ci":3,"in":12,"ne":11," t":20,"tô":3,"ôt":3,"t ":42,"le":23," m":19,"ma":11,"at":9,"ti":5,"n ":23,"î":2,"h":11,"u":87,"f":12,"l ":11," e":22,"en":18,"nt":14,"tr":10,"ra":9,"aî":2,"în":2,"em":7,"me":11,"de":20,"ri":4,"ia":2,"th":2,"hl":1,"lo":5,"on":20,"es":16,"st":5,"du":3,"ur":23,"ai":18," g":3,"gr":2,"if":1,"fi":1,"é":28,"q":9,"no":8,"ot":1," é":7,"qu":9,"ui":8,"ip":1,"pe":3,"ga":2,"gn":2,"né":4,"é ":9,"tc":2,"ch":4,"h ":2,"rn":5,"ni":5,"ie":6," s":12,"se":9,"et":20,"à":8,"v":19,"ap":4,"pp":3,"pr":5,"nd":6,"ds":1," à":8,"à ":8," c":15,"cu":2,"si":4," q":6,"ue":8,"el":5,"ou":30,"uv":4,"ve":5,"ll":6," r":9,"ec":1,"ce":5,"tt":3,"te":14,"x":1,"je":4," v":5,"eu":6,"x ":1,"to":6,"mo":6,"ta":10,"ét":7,"té":2," i":5,"il":6,"ac":2,"he":3," u":5,"un":7,"ea":9,"au":14,"u ":12,"él":2,"o ":1,"ro":4,"ut":4,"po":9,"co":9,"rs":4,"è":4,"b":13,"so":2,"av":6,"va":5,"pa":5,"as":5,"ss":1," b":9,"bi":2,"mp":1,"ps":1,"io":4,"it":11,"pl":3,"lu":4,"us":6,"id":5,"bo":3,"jo":7,"om":4,"mm":3,"tu":3,"uj":3,"rd":3,"d ":6," h":5,"hu":3,"i ":7,"w":1,"k":2,"sp":1,"rt":4,"ré":4,"éf":2,"fé":3,"ér":2,"nn":3," w":1,"we":1,"ee":1,"ek":1,"k ":1,"di":2,"al":3,"am":1,"li":4,"y":2,"ar":4,"rl":2,"ua":1,"ng":2,"gu":2,"vo":4,"oy":2," f":7,"fe":1,"rm":3,"és":1,"nq":1,"ué":1,"nc":1,"rr":1,"m ":2,"ye":1,"oi":5,"ir":4,"ée":2,"ru":2,"su":3,"iv":2,"vi":3,"èr":2,"hé":1,"rc":2,"be":5,"uc":2,"up":3,"p ":2,"fr":3,"mi":2,"ic":1,"ct":1," k":1,"ki":1," o":1,"ub":2,"bl":3,"c ":1,"rf":1,"fa":3,"ca":2,"mb":1,"ha":1,"ud":1,"dr":2,"um":1,"af":1,"oj":1},"vi":{" ":375,"c":69,"ô":21,"ấ":17,"y":26,"n":139,"ó":10,"i":62,"đ":24,"ư":12,"ợ":3,"b":26,"ố":15,"t":80,"h":99,"ứ":2,"ế":8,"g":57,"v":27,"à":34,"r":20,"í":8,"d":2,"u":32,"l":18," c":50,"cô":3,"ô ":2," ấ":5,"ấy":5,"y ":22," n":33,"nó":3,"ói":3,"i ":44," đ":24,"c ":13," b":26,"ốn":6,"n ":49," t":56,"th":17,"ti":3,"iế":3,"ến":5,"ng":50,"g ":42," v":27,"và":16,"à ":13," r":10,"rấ":8,"ất":10,"t ":24,"hí":5,"íc":4,"ch":27,"h ":21,"đi":3," d":2,"du":1,"u ":10," l":18,"ớ":11,"ạ":14,"ổ":4,"ơ":8,"ả":10,"m":35,"ệ":6,"ờ":6,"nư":3,"ướ":5,"ớc":5,"lạ":4,"ạn":6,"nh":27,"hư":4,"ưn":2,"bu":3,"uổ":4,"ổi":4,"bơ":4,"ơi":5,"cả":7,"ảm":4,"m ":14,"hấ":2,"tu":2,"uy":4,"yệ":4,"ời":4,"ộ":9,"á":15,"s":10,"ú":11,"p":19,"ì":4,"tô":11,"ôi":11," m":21,"mu":1,"uố":6,"mộ":5,"ột":5,"bá":3," s":10,"úp":2,"p ":10,"án":7,"mì":2,"ì ":2,"o":21,"ă":4,"q":3,"a":30,"ồ":3,"e":5,"co":1,"on":4,"hó":2,"ó ":4,"hạ":4,"ạy":4,"ăn":4," q":3,"qu":3,"ua":2,"a ":12,"cá":2,"đồ":2,"he":2,"eo":2,"o ":14,"ả ":5,"ón":3,"â":4,"tá":1,"câ":3,"ây":4,"ố ":2,"gà":5,"ày":6,"ề":5,"ắ":5,"về":2,"ề ":2," g":7,"gi":4,"ư ":2,"hi":4,"ắn":2,"ử":4,"ễ":3,"cử":3,"ửa":3," h":14,"hà":3,"àn":7,"sớ":2,"ớm":2,"ào":6,"ễ ":2,"ọ":3,"x":7,"ầ":6,"họ":2,"đa":4,"an":10," x":7,"cầ":2,"ầu":2,"mớ":2,"ới":2,"ôn":6,"ẹ":2,"ặ":4,"hú":7,"úc":2,"tố":4,"ốt":2,"là":2,"hẹ":2,"ẹn":2,"gặ":2,"ặp":2,"ại":2,"ủ":5,"ậ":4,"ê":7,"tà":2,"mi":2," p":9,"ph":9,"hậ":2,"ật":2,"iê":2,"ên":5,"củ":4,"ủa":4,"há":2,"k":7,"é":2,"ma":2," k":7,"ín":2,"kh":5,"ắm":2,"hé":2,"é ":2,"ự":2,"sa":2,"au":3,"hầ":2,"ần":4,"xe":2,"e ":3,"bộ":2,"ộ ":3,"ự ":2,"tr":10,"hơ":2,"ro":2,"ườ":2,"su":1,"iề":3,"ều":3,"ún":6,"hê":2,"ra":1,"rá":1,"ho":4,"ở":2,"vi":3,"iệ":2,"ện":4,"ở ":2,"đế":2,"ối":3,"oà":2,"to":1,"lu":2,"ba":1,"hố":2,"ỉ":2," a":2,"á ":1," u":3,"ừ":2,"ìn":2,"in":2,"từ":2,"ể":2,"bạ":3,"có":2,"áo":2,"rư":2,"na":3,"ay":3,"hô":4,"ta":1,"hu":4," á":2,"ia":1,"ha":1,"ơn":3,"ã":2,"ỡ":2," ơ":2,"đã":2,"ã ":2,"ỡ ":2,"xi":1,"ôm":2," ă":2,"go":1,"cu":1,"ai":1,"áp":1,"ế ":2,"bi":1,"la":1},"es":{" ":320,"e":161,"l":75,"n":82,"a":181,"d":55,"o":100,"r":101,"s":76,"z":4,"ó":11,"g":18,"u":55,"f":11,"í":10,"y":13," e":35,"el":23,"l ":25," n":12,"na":16,"ad":7,"da":10,"do":14,"or":14,"r ":20," s":11,"se":5,"e ":38," l":27,"la":27,"an":17,"ó ":6," a":27,"al":8,"ag":4,"gu":7,"ua":3,"a ":73," f":6,"fr":3,"rí":3,"ía":7," y":7,"y ":9,"az":2,"ul":1,"é":5,"c":41,"m":44,"p":38,"b":15,"i":67,"t":74,"v":15," é":1,"él":1," c":17,"co":10,"om":5,"mp":6,"pr":9,"ró":2," u":10,"un":13," b":6,"bi":4,"ic":6,"ci":8,"cl":1,"le":2,"et":4,"ta":18," d":25,"de":18,"ca":8,"ar":18,"rr":9,"re":16,"te":13,"er":23,"ra":22,"nu":5,"ue":15,"ev":4,"va":3," p":27,"pa":6,"no":7,"o ":42," o":2,"ol":4,"lv":2,"vi":4,"id":4,"es":23,"s ":42," t":24,"tr":9,"tu":4,"us":2," g":6,"ga":3,"af":2,"fa":1,"as":16,"u ":2,"to":14,"oa":1,"ll":2,"rm":3,"mi":9,"in":8,"si":6,"nt":13,"ti":10,"ió":5,"mo":8,"gr":4,"n ":19," v":7,"ct":4,"ri":5,"ia":6,"j":7,"q":8,"h":9,"st":14,"ud":4,"d ":1,"ie":14,"en":24,"ne":6," m":17,"me":10,"ej":2,"jo":3," q":7,"qu":8," h":4,"he":3,"ro":11,"ob":2,"ba":4,"oy":2,"ap":1,"nd":7,"di":3,"oc":5,"lg":2," r":6,"ec":8,"ce":5,"á":6,"i ":5,"em":5,"po":8,"at":6,"ac":3,"ón":3,"fu":2,"má":2,"ás":2,"rá":1,"áp":1,"pi":4,"sa":2,"ñ":4,"ef":1,"fi":2,"té":1,"é ":3,"ma":6,"añ":3,"ña":3,"od":4,"dí":6,"sp":2,"pu":2,"ué":2,"és":1,"mu":3,"uy":2,"du":3,"ur":3,"ib":2,"bl":2,"li":3,"io":1,"ot":2,"tá":3,"á ":2,"ab":5,"rt":2,"ha":4,"ve":4,"ch":5,"ui":4,"vo":3,"on":3,"eo":1,"is":3,"im":3,"ng":2,"go":2,"pe":7,"ge":1,"ni":3,"av":1,"am":9,"eg":2,"án":1,"ns":1,"ru":2,"ye":2,"so":3,"br":2,"k":1,"ho":2," k":1,"ki":1,"il":2,"ló":3,"os":15,"lo":8,"su":1,"aj":3,"bu":3,"ee":1,"ir":1,"ay":2,"yu":2,"ja":2,"fé":1,"rf":1,"fe":2,"nq":1,"uc":1,"x":1,"pl":2,"ea":1,"je":1,"xi":1,"it":2,"op":1,"gl":1,"nc":1,"ut":2,"rd":3,"iv":1,"rs":1,"ig":1,"lt":1,"if":1," j":2,"ug":1,"ín":1}}};
+const LANGS = MODEL.langs;
+const DISP = { en:{flag:"🇬🇧",name:"English"}, fr:{flag:"🇫🇷",name:"Français"},
+               vi:{flag:"🇻🇳",name:"Tiếng Việt"}, es:{flag:"🇪🇸",name:"Español"} };
+const FLAIR = { vi:"Chuẩn luôn! 🌟", fr:"Magnifique ! 🥐", es:"¡Perfecto! 🌶️", en:"Nice one! 🏅" };
+
+const UI = {
+ en:{tag:"Type anything — my model guesses which of my four languages it is.",
+     by:"by Daniel · polyglot triathlete 🏊 🎾 🚴", ph:"Type a phrase in any language…",
+     tryl:"Try one:", hint:"Start typing and I'll detect the language live.", det:"Detected",
+     how:"How it works: a character n-gram Naïve Bayes classifier I trained on ~180 sentences across English, French, Vietnamese & Spanish — 97.7% held-out accuracy, running entirely in your browser."},
+ fr:{tag:"Écris n'importe quoi — mon modèle devine laquelle de mes quatre langues c'est.",
+     by:"par Daniel · triathlète polyglotte 🏊 🎾 🚴", ph:"Écris une phrase dans n'importe quelle langue…",
+     tryl:"Essaie :", hint:"Commence à écrire et je détecte la langue en direct.", det:"Détecté",
+     how:"Comment ça marche : un classifieur naïf bayésien sur n-grammes de caractères, entraîné sur ~180 phrases en anglais, français, vietnamien et espagnol — 97,7 % de précision, directement dans ton navigateur."},
+ vi:{tag:"Gõ bất cứ điều gì — mô hình sẽ đoán đó là ngôn ngữ nào trong bốn thứ tiếng của tôi.",
+     by:"bởi Daniel · vận động viên ba môn phối hợp đa ngữ 🏊 🎾 🚴", ph:"Gõ một câu bằng bất kỳ ngôn ngữ nào…",
+     tryl:"Thử xem:", hint:"Bắt đầu gõ và tôi sẽ nhận diện ngôn ngữ ngay lập tức.", det:"Nhận diện",
+     how:"Cách hoạt động: bộ phân loại Naïve Bayes dựa trên n-gram ký tự, huấn luyện trên ~180 câu tiếng Anh, Pháp, Việt và Tây Ban Nha — độ chính xác 97,7%, chạy hoàn toàn trong trình duyệt của bạn."},
+ es:{tag:"Escribe lo que sea — mi modelo adivina cuál de mis cuatro idiomas es.",
+     by:"por Daniel · triatleta políglota 🏊 🎾 🚴", ph:"Escribe una frase en cualquier idioma…",
+     tryl:"Prueba:", hint:"Empieza a escribir y detecto el idioma en vivo.", det:"Detectado",
+     how:"Cómo funciona: un clasificador Naïve Bayes de n-gramas de caracteres, entrenado con ~180 frases en inglés, francés, vietnamita y español — 97,7% de precisión, ejecutándose por completo en tu navegador."},
+};
+const EXAMPLES = [
+ ["vi","Tôi tập ba môn phối hợp mỗi sáng trước khi đi làm."],
+ ["fr","J'adore le tennis et la natation le week-end."],
+ ["es","Hoy nadé en el lago y luego corrí diez kilómetros."],
+ ["en","Race day is finally here — let's swim, bike and run!"],
+];
+
+let ui = "en";
+const KEEP = /[^a-zà-ÿăâđêôơưạ-ỹ\s]/giu;
+function pre(t){ t=t.toLowerCase().replace(KEEP," ").replace(/\s+/g," ").trim(); return " "+t+" "; }
+function* grams(t){ const s=pre(t); for(let n=MODEL.nmin;n<=MODEL.nmax;n++) for(let i=0;i+n<=s.length;i++) yield s.slice(i,i+n); }
+function scores(text){ const out={}; for(const l of LANGS){ const c=MODEL.counts[l], denom=MODEL.total[l]+MODEL.V; let s=MODEL.log_prior[l]; for(const g of grams(text)) s+=Math.log(((c[g]||0)+1)/denom); out[l]=s; } return out; }
+function softmax(d){ const m=Math.max(...Object.values(d)); const e={}; let z=0; for(const k in d){e[k]=Math.exp(d[k]-m);z+=e[k];} for(const k in e)e[k]/=z; return e; }
+
+function render(){
+  const t=UI[ui];
+  document.getElementById("tagline").textContent=t.tag;
+  document.getElementById("by").textContent=t.by;
+  document.getElementById("how").textContent=t.how;
+  document.getElementById("tryl").textContent=t.tryl;
+  document.getElementById("inp").placeholder=t.ph;
+  // ui toggle
+  const tog=document.getElementById("uitog"); tog.innerHTML="";
+  for(const l of LANGS){ const b=document.createElement("button");
+    b.textContent=DISP[l].flag+" "+DISP[l].name; if(l===ui)b.className="on";
+    b.onclick=()=>{ui=l;render();detect();}; tog.appendChild(b); }
+  // chips
+  const ch=document.getElementById("chips"); ch.innerHTML="";
+  for(const [l,s] of EXAMPLES){ const c=document.createElement("span"); c.className="chip";
+    c.textContent=DISP[l].flag+" "+s.slice(0,26)+"…";
+    c.onclick=()=>{document.getElementById("inp").value=s; detect();}; ch.appendChild(c); }
+  detect();
+}
+
+function detect(){
+  const text=document.getElementById("inp").value.trim();
+  const box=document.getElementById("result");
+  if(!text){ box.innerHTML='<div class="hint">'+UI[ui].hint+'</div>'; return; }
+  const p=softmax(scores(text));
+  const order=[...LANGS].sort((a,b)=>p[b]-p[a]); const top=order[0];
+  let h='<div class="det"><div class="flag">'+DISP[top].flag+'</div>'+
+    '<div><div class="name">'+DISP[top].name+'</div><div class="flair">'+(FLAIR[top]||"")+'</div></div>'+
+    '<div class="pct">'+Math.round(p[top]*100)+'%</div></div>';
+  for(const l of order){ h+='<div class="bar'+(l===top?' win':'')+'">'+
+    '<div class="bl">'+DISP[l].flag+' '+DISP[l].name+'</div>'+
+    '<div class="track"><div class="fill" style="width:'+(p[l]*100).toFixed(1)+'%"></div></div>'+
+    '<div class="bp">'+(p[l]*100).toFixed(1)+'%</div></div>'; }
+  box.innerHTML=h;
+}
+
+// cycling greeting
+const GRT=["Xin chào","Bonjour","¡Hola!","Hello"]; let gi=0;
+setInterval(()=>{ const g=document.getElementById("greet"); g.style.opacity=0;
+  setTimeout(()=>{ gi=(gi+1)%GRT.length; g.textContent=GRT[gi]; g.style.opacity=1; },350); },2000);
+
+document.getElementById("inp").addEventListener("input",detect);
+render();
+</script>
+</body>
+</html>
