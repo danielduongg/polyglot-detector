@@ -1,5 +1,7 @@
 # Polyglot 🗣️ — guess my language
 
+[![CI](https://github.com/danielduongg/polyglot-detector/actions/workflows/ci.yml/badge.svg)](https://github.com/danielduongg/polyglot-detector/actions)
+
 **Type a phrase in any of my four languages — English, French, Vietnamese, or Spanish — and a tiny machine-learning model guesses which one, live in your browser.**
 
 A fun, personal ML project: a character n-gram **Naïve Bayes** language detector trained on
